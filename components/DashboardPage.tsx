@@ -1,4 +1,4 @@
-import React, { useState, useCallback } from 'react';
+import React, { useState, useCallback, useMemo } from 'react';
 import type { Product, Reservation, Activity, ActivityType, ShippedOrder } from '../types';
 import { ActivityType as AT } from '../types';
 import Header from './Header';
@@ -38,6 +38,8 @@ const initialProducts: Product[] = [
 
 type View = 'inventory' | 'shippingReport';
 
+const LOW_STOCK_THRESHOLD = 5;
+
 interface DashboardPageProps {
   onLogout: () => void;
 }
@@ -49,6 +51,14 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const [productToDelete, setProductToDelete] = useState<Product | null>(null);
   const [productForReport, setProductForReport] = useState<Product | null>(null);
   const [currentView, setCurrentView] = useState<View>('inventory');
+
+  const lowStockProducts = useMemo(() => {
+    return products.filter(p => {
+        const reserved = p.reservations.reduce((sum, r) => sum + r.quantity, 0);
+        const available = p.stock - reserved;
+        return available > 0 && available <= LOW_STOCK_THRESHOLD;
+    });
+  }, [products]);
 
   const handleAddProduct = useCallback((name: string, stock: number, basePrice: number): void => {
     if (name.trim() === '' || stock < 0 || basePrice < 0) return;
@@ -227,6 +237,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
         onLogout={onLogout} 
         currentView={currentView}
         onViewChange={setCurrentView}
+        lowStockProducts={lowStockProducts}
       />
       <main className="container mx-auto px-4 py-8">
         {currentView === 'inventory' ? (

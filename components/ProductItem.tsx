@@ -6,6 +6,7 @@ import { CheckIcon } from './icons/CheckIcon';
 import { ArchiveBoxPlusIcon } from './icons/ArchiveBoxPlusIcon';
 import { ChartBarIcon } from './icons/ChartBarIcon';
 import { TruckIcon } from './icons/TruckIcon';
+import { ExclamationTriangleIcon } from './icons/ExclamationTriangleIcon';
 
 interface ProductItemProps {
   product: Product;
@@ -35,6 +36,8 @@ const ProductItem: React.FC<ProductItemProps> = ({
 
   const [isAddingStock, setIsAddingStock] = useState<boolean>(false);
   const [stockToAdd, setStockToAdd] = useState<string>('');
+  
+  const LOW_STOCK_THRESHOLD = 5;
 
   const { reservedQuantity, availableStock } = useMemo(() => {
     const reserved = product.reservations.reduce((sum, r) => sum + r.quantity, 0);
@@ -84,9 +87,12 @@ const ProductItem: React.FC<ProductItemProps> = ({
     }
   };
 
-  const availableStockClass = availableStock > 0
-    ? 'text-green-600 dark:text-green-400'
-    : 'text-red-600 dark:text-red-400';
+  const availableStockClass =
+    availableStock > LOW_STOCK_THRESHOLD
+      ? 'text-green-600 dark:text-green-400'
+      : availableStock > 0
+      ? 'text-yellow-600 dark:text-yellow-400'
+      : 'text-red-600 dark:text-red-400';
 
   return (
     <div className="bg-white dark:bg-slate-800 p-4 rounded-lg shadow-md flex flex-col gap-4 transition-shadow hover:shadow-lg">
@@ -96,7 +102,15 @@ const ProductItem: React.FC<ProductItemProps> = ({
           <div className="flex items-center flex-wrap gap-x-4 gap-y-1 mt-1 text-sm text-slate-500 dark:text-slate-400">
             <span>Stock: <span className="font-medium text-slate-700 dark:text-slate-300">{product.stock}</span></span>
             <span>Reserved: <span className="font-medium text-slate-700 dark:text-slate-300">{reservedQuantity}</span></span>
-            <span>Available: <span className={`font-medium ${availableStockClass}`}>{availableStock}</span></span>
+            <span className="inline-flex items-center">
+              Available: <span className={`font-medium ml-1 ${availableStockClass}`}>{availableStock}</span>
+              {availableStock > 0 && availableStock <= LOW_STOCK_THRESHOLD && (
+                <span className="ml-2 text-yellow-600 dark:text-yellow-400 inline-flex items-center gap-1 text-xs font-semibold">
+                  <ExclamationTriangleIcon className="w-4 h-4" />
+                  Low Stock
+                </span>
+              )}
+            </span>
             <span>Base Price: <span className="font-medium text-slate-700 dark:text-slate-300">${product.basePrice.toFixed(2)}</span></span>
           </div>
         </div>
