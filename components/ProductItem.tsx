@@ -4,14 +4,18 @@ import { EditIcon } from './icons/EditIcon';
 import { TrashIcon } from './icons/TrashIcon';
 import { CheckIcon } from './icons/CheckIcon';
 import { ArchiveBoxPlusIcon } from './icons/ArchiveBoxPlusIcon';
+import { ChartBarIcon } from './icons/ChartBarIcon';
+import { TruckIcon } from './icons/TruckIcon';
 
 interface ProductItemProps {
   product: Product;
-  onReserveProduct: (id: number, customerName: string, quantity: number) => void;
+  onReserveProduct: (id: number, customerName: string, quantity: number, unitPrice: number) => void;
   onDeleteProduct: (product: Product) => void;
   onEditProduct: (product: Product) => void;
   onCancelReservation: (productId: number, reservationId: number) => void;
   onAddStock: (productId: number, quantityToAdd: number) => void;
+  onShowReport: (product: Product) => void;
+  onShipOrder: (productId: number, reservationId: number) => void;
 }
 
 const ProductItem: React.FC<ProductItemProps> = ({
@@ -21,10 +25,13 @@ const ProductItem: React.FC<ProductItemProps> = ({
   onEditProduct,
   onCancelReservation,
   onAddStock,
+  onShowReport,
+  onShipOrder,
 }) => {
   const [isReserving, setIsReserving] = useState<boolean>(false);
   const [customerName, setCustomerName] = useState<string>('');
   const [quantity, setQuantity] = useState<string>('1');
+  const [unitPrice, setUnitPrice] = useState<string>(product.basePrice.toString());
 
   const [isAddingStock, setIsAddingStock] = useState<boolean>(false);
   const [stockToAdd, setStockToAdd] = useState<string>('');
@@ -38,6 +45,7 @@ const ProductItem: React.FC<ProductItemProps> = ({
   }, [product.stock, product.reservations]);
 
   const handleReserveClick = (): void => {
+    setUnitPrice(product.basePrice.toString());
     setIsReserving(true);
   };
   
@@ -45,20 +53,18 @@ const ProductItem: React.FC<ProductItemProps> = ({
     setIsReserving(false);
     setCustomerName('');
     setQuantity('1');
+    setUnitPrice(product.basePrice.toString());
   }
 
   const handleReserveSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     const numQuantity = parseInt(quantity, 10);
-    if (customerName.trim() && !isNaN(numQuantity) && numQuantity > 0 && numQuantity <= availableStock) {
-      onReserveProduct(product.id, customerName.trim(), numQuantity);
+    const numPrice = parseFloat(unitPrice);
+    if (customerName.trim() && !isNaN(numQuantity) && numQuantity > 0 && numQuantity <= availableStock && !isNaN(numPrice) && numPrice >= 0) {
+      onReserveProduct(product.id, customerName.trim(), numQuantity, numPrice);
       handleCancelReservationForm();
     }
   };
-
-  const handleCancelReservationClick = (reservationId: number) => {
-    onCancelReservation(product.id, reservationId);
-  }
 
   const handleAddStockClick = (): void => {
     setIsAddingStock(true);
@@ -91,10 +97,18 @@ const ProductItem: React.FC<ProductItemProps> = ({
             <span>Stock: <span className="font-medium text-slate-700 dark:text-slate-300">{product.stock}</span></span>
             <span>Reserved: <span className="font-medium text-slate-700 dark:text-slate-300">{reservedQuantity}</span></span>
             <span>Available: <span className={`font-medium ${availableStockClass}`}>{availableStock}</span></span>
+            <span>Base Price: <span className="font-medium text-slate-700 dark:text-slate-300">${product.basePrice.toFixed(2)}</span></span>
           </div>
         </div>
         
         <div className="flex items-center gap-2 flex-shrink-0 self-start">
+            <button
+              onClick={() => onShowReport(product)}
+              className="p-2 text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
+              aria-label="Product Report"
+            >
+              <ChartBarIcon className="w-5 h-5" />
+            </button>
             <button
               onClick={handleAddStockClick}
               className="p-2 text-slate-500 hover:text-primary-600 dark:text-slate-400 dark:hover:text-primary-400 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
@@ -155,7 +169,7 @@ const ProductItem: React.FC<ProductItemProps> = ({
         )}
 
         {isReserving && (
-          <form onSubmit={handleReserveSubmit} className="flex flex-col sm:flex-row gap-2 p-2 -m-2 bg-slate-50 dark:bg-slate-900/50 rounded-md">
+          <form onSubmit={handleReserveSubmit} className="flex flex-col sm:flex-row flex-wrap gap-2 p-2 -m-2 bg-slate-50 dark:bg-slate-900/50 rounded-md">
             <input
               type="text"
               value={customerName}
@@ -175,7 +189,17 @@ const ProductItem: React.FC<ProductItemProps> = ({
               min="1"
               max={availableStock}
             />
-            <div className="flex gap-2">
+             <input
+              type="number"
+              value={unitPrice}
+              onChange={(e) => setUnitPrice(e.target.value)}
+              placeholder="Unit Price"
+              className="px-3 py-2 text-sm border border-slate-300 rounded-md dark:bg-slate-700 dark:border-slate-600 w-full sm:w-28 focus:ring-primary-500 focus:border-primary-500"
+              required
+              min="0"
+              step="0.01"
+            />
+            <div className="flex gap-2 ml-auto">
               <button type="submit" className="p-2 bg-green-500 text-white rounded-md hover:bg-green-600 flex-grow sm:flex-grow-0">
                 <CheckIcon className="w-5 h-5"/>
               </button>
@@ -192,15 +216,24 @@ const ProductItem: React.FC<ProductItemProps> = ({
               <li key={res.id} className="flex justify-between items-center p-2 rounded-md bg-slate-50 dark:bg-slate-700/50">
                 <div className="text-sm">
                   <span className="font-medium text-slate-800 dark:text-slate-200">{res.customerName}</span>
-                  <span className="text-slate-500 dark:text-slate-400"> - Reserved: {res.quantity}</span>
+                  <span className="text-slate-500 dark:text-slate-400"> - Qty: {res.quantity} @ ${res.unitPrice.toFixed(2)}</span>
                 </div>
-                <button 
-                  onClick={() => handleCancelReservationClick(res.id)}
-                  className="p-1 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
-                  aria-label={`Cancel reservation for ${res.customerName}`}
-                >
-                  <TrashIcon className="w-4 h-4" />
-                </button>
+                <div className="flex items-center">
+                  <button 
+                    onClick={() => onShipOrder(product.id, res.id)}
+                    className="p-1 text-slate-400 hover:text-green-500 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                    aria-label={`Ship order for ${res.customerName}`}
+                  >
+                    <TruckIcon className="w-4 h-4" />
+                  </button>
+                  <button 
+                    onClick={() => onCancelReservation(product.id, res.id)}
+                    className="p-1 text-slate-400 hover:text-red-500 rounded-full hover:bg-slate-200 dark:hover:bg-slate-600 transition-colors"
+                    aria-label={`Cancel reservation for ${res.customerName}`}
+                  >
+                    <TrashIcon className="w-4 h-4" />
+                  </button>
+                </div>
               </li>
             ))}
           </ul>

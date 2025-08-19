@@ -4,11 +4,13 @@ import ProductItem from './ProductItem';
 
 interface ProductListProps {
   products: Product[];
-  onReserveProduct: (id: number, customerName: string, quantity: number) => void;
+  onReserveProduct: (id: number, customerName: string, quantity: number, unitPrice: number) => void;
   onDeleteProduct: (product: Product) => void;
   onEditProduct: (product: Product) => void;
   onCancelReservation: (productId: number, reservationId: number) => void;
   onAddStock: (productId: number, quantityToAdd: number) => void;
+  onShowReport: (product: Product) => void;
+  onShipOrder: (productId: number, reservationId: number) => void;
 }
 
 const ProductList: React.FC<ProductListProps> = ({
@@ -18,6 +20,8 @@ const ProductList: React.FC<ProductListProps> = ({
   onEditProduct,
   onCancelReservation,
   onAddStock,
+  onShowReport,
+  onShipOrder,
 }) => {
   if (products.length === 0) {
     return (
@@ -39,6 +43,8 @@ const ProductList: React.FC<ProductListProps> = ({
           onEditProduct={onEditProduct}
           onCancelReservation={onCancelReservation}
           onAddStock={onAddStock}
+          onShowReport={onShowReport}
+          onShipOrder={onShipOrder}
         />
       ))}
     </div>
