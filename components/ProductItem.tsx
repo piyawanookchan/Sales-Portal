@@ -8,7 +8,7 @@ import { ArchiveBoxPlusIcon } from './icons/ArchiveBoxPlusIcon';
 interface ProductItemProps {
   product: Product;
   onReserveProduct: (id: number, customerName: string, quantity: number) => void;
-  onDeleteProduct: (id: number) => void;
+  onDeleteProduct: (product: Product) => void;
   onEditProduct: (product: Product) => void;
   onCancelReservation: (productId: number, reservationId: number) => void;
   onAddStock: (productId: number, quantityToAdd: number) => void;
@@ -110,7 +110,7 @@ const ProductItem: React.FC<ProductItemProps> = ({
               <EditIcon className="w-5 h-5" />
             </button>
             <button
-              onClick={() => onDeleteProduct(product.id)}
+              onClick={() => onDeleteProduct(product)}
               className="p-2 text-slate-500 hover:text-red-600 dark:text-slate-400 dark:hover:text-red-500 rounded-full hover:bg-slate-100 dark:hover:bg-slate-700 transition-colors"
               aria-label="Delete Product"
             >

@@ -4,6 +4,7 @@ import Header from './Header';
 import AddProductForm from './AddProductForm';
 import ProductList from './ProductList';
 import EditProductModal from './EditProductModal';
+import ConfirmationModal from './ConfirmationModal';
 
 const initialProducts: Product[] = [
   { 
@@ -30,6 +31,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
   const [products, setProducts] = useState<Product[]>(initialProducts);
   const [productToEdit, setProductToEdit] = useState<Product | null>(null);
   const [isModalOpen, setIsModalOpen] = useState<boolean>(false);
+  const [productToDelete, setProductToDelete] = useState<Product | null>(null);
 
   const handleAddProduct = useCallback((name: string, stock: number): void => {
     if (name.trim() === '' || stock < 0) return;
@@ -59,9 +61,19 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
     handleCloseEditModal();
   }, [handleCloseEditModal]);
 
-  const handleDeleteProduct = useCallback((id: number): void => {
-    setProducts(prevProducts => prevProducts.filter(p => p.id !== id));
+  const handleOpenDeleteModal = useCallback((product: Product): void => {
+    setProductToDelete(product);
   }, []);
+
+  const handleCloseDeleteModal = useCallback((): void => {
+    setProductToDelete(null);
+  }, []);
+
+  const handleConfirmDelete = useCallback((): void => {
+    if (!productToDelete) return;
+    setProducts(prevProducts => prevProducts.filter(p => p.id !== productToDelete.id));
+    handleCloseDeleteModal();
+  }, [productToDelete, handleCloseDeleteModal]);
 
   const handleReserveProduct = useCallback((productId: number, customerName: string, quantity: number): void => {
     setProducts(prevProducts =>
@@ -116,7 +128,7 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           <ProductList
             products={products}
             onReserveProduct={handleReserveProduct}
-            onDeleteProduct={handleDeleteProduct}
+            onDeleteProduct={handleOpenDeleteModal}
             onEditProduct={handleOpenEditModal}
             onCancelReservation={handleCancelReservation}
             onAddStock={handleAddStock}
@@ -128,6 +140,15 @@ const DashboardPage: React.FC<DashboardPageProps> = ({ onLogout }) => {
           product={productToEdit}
           onClose={handleCloseEditModal}
           onSave={handleUpdateProduct}
+        />
+      )}
+      {productToDelete && (
+        <ConfirmationModal
+          title="Delete Product"
+          message={`Are you sure you want to delete "${productToDelete.name}"? This action cannot be undone.`}
+          onConfirm={handleConfirmDelete}
+          onCancel={handleCloseDeleteModal}
+          confirmButtonText="Delete"
         />
       )}
     </>

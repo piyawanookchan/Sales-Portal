@@ -5,7 +5,7 @@ import ProductItem from './ProductItem';
 interface ProductListProps {
   products: Product[];
   onReserveProduct: (id: number, customerName: string, quantity: number) => void;
-  onDeleteProduct: (id: number) => void;
+  onDeleteProduct: (product: Product) => void;
   onEditProduct: (product: Product) => void;
   onCancelReservation: (productId: number, reservationId: number) => void;
   onAddStock: (productId: number, quantityToAdd: number) => void;
